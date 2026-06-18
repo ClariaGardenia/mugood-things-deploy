@@ -4,7 +4,7 @@ import { useUserStore } from '@/stores/userStore'
 import router from '@/router'
 // 创建axios实例
 const http = axios.create({
-  baseURL: 'http://118.178.237.0:8080',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 8000
 })
 

@@ -18,8 +18,8 @@
   onMounted(() => { getPayInfo() })
 
   // 支付地址
-  const baseURL = 'http://118.178.237.0:8080/'
-  const backURL = 'http://localhost:5173/paycallback'
+  const baseURL = import.meta.env.VITE_API_BASE_URL
+  const backURL = import.meta.env.VITE_PAY_BASE_URL
   const redirectUrl = encodeURIComponent(backURL)
   const payUrl = `${baseURL}pay/aliPay?orderId=${route.query.id}&redirect=${redirectUrl}`
 </script>
