@@ -56,9 +56,9 @@ public class CustomerGoodsTool {
 
     private List<Map<String, Object>> loadActiveGoods(int limit) {
         List<Map<String, Object>> goods = jdbcTemplate.queryForList("""
-                select g.id, g.name, g.description `desc`, g.price, g.old_price oldPrice,
-                       g.main_picture picture, g.sales_count salesCount, g.inventory,
-                       c.name categoryName, b.name brandName
+                select g.id, g.name, g.description as "desc", g.price, g.old_price as "oldPrice",
+                       g.main_picture picture, g.sales_count as "salesCount", g.inventory,
+                       c.name as "categoryName", b.name as "brandName"
                 from goods g
                 left join category c on c.id = g.category_id
                 left join brand b on b.id = g.brand_id

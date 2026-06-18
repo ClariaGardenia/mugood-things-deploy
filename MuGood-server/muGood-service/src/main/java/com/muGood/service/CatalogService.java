@@ -19,7 +19,7 @@ public class CatalogService {
 
     public Map<String, Object> category(Long id) {
         Map<String, Object> category = jdbcTemplate.queryForMap("""
-                select id, parent_id parentId, name, picture, sale_info saleInfo
+                select id, parent_id as "parentId", name, picture, sale_info as "saleInfo"
                 from category
                 where id = ?
                 """, id);
@@ -32,7 +32,7 @@ public class CatalogService {
 
     public Map<String, Object> subFilter(Long id) {
         return jdbcTemplate.queryForMap("""
-                select c.id, c.name, c.parent_id parentId, p.name parentName
+                select c.id, c.name, c.parent_id as "parentId", p.name as "parentName"
                 from category c
                 left join category p on p.id = c.parent_id
                 where c.id = ?
@@ -52,7 +52,7 @@ public class CatalogService {
                 where category_id = ? and status = 1
                 """, Long.class, categoryId);
         List<Map<String, Object>> items = jdbcTemplate.queryForList("""
-                select id, name, description `desc`, price, main_picture picture
+                select id, name, description as "desc", price, main_picture picture
                 from goods
                 where category_id = ? and status = 1
                 order by %s
@@ -75,7 +75,7 @@ public class CatalogService {
 
     private List<Map<String, Object>> goodsByCategory(Long categoryId, int limit) {
         List<Map<String, Object>> goods = jdbcTemplate.queryForList("""
-                select id, name, description `desc`, price, main_picture picture
+                select id, name, description as "desc", price, main_picture picture
                 from goods
                 where category_id = ? and status = 1
                 order by order_num desc

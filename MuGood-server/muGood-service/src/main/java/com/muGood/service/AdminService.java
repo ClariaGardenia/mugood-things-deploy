@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,7 +30,7 @@ public class AdminService {
         Long goodsCount = jdbcTemplate.queryForObject("select count(*) from goods", Long.class);
         Long categoryCount = jdbcTemplate.queryForObject("select count(*) from category", Long.class);
         Long orderCount = jdbcTemplate.queryForObject("select count(*) from orders", Long.class);
-        Long userCount = jdbcTemplate.queryForObject("select count(*) from user", Long.class);
+        Long userCount = jdbcTemplate.queryForObject("select count(*) from \"user\"", Long.class);
         Object salesAmount = jdbcTemplate.queryForObject("select coalesce(sum(pay_money), 0) from orders where order_state <> 6", Object.class);
         return Map.of(
                 "goodsCount", goodsCount == null ? 0 : goodsCount,
@@ -51,9 +50,9 @@ public class AdminService {
                 where (? = '%%' or g.name like ?)
                 """, Long.class, likeKeyword, likeKeyword);
         List<Map<String, Object>> items = jdbcTemplate.queryForList("""
-                select g.id, g.name, g.description `desc`, g.price, g.old_price oldPrice, g.main_picture picture,
-                       g.inventory, g.sales_count salesCount, g.status, g.category_id categoryId, g.brand_id brandId,
-                       g.is_new isNew, g.is_hot isHot, c.name categoryName, b.name brandName
+                select g.id, g.name, g.description as "desc", g.price, g.old_price as "oldPrice", g.main_picture picture,
+                       g.inventory, g.sales_count as "salesCount", g.status, g.category_id as "categoryId", g.brand_id as "brandId",
+                       g.is_new as "isNew", g.is_hot as "isHot", c.name as "categoryName", b.name as "brandName"
                 from goods g
                 left join category c on c.id = g.category_id
                 left join brand b on b.id = g.brand_id
@@ -67,9 +66,9 @@ public class AdminService {
 
     public Map<String, Object> goodsDetail(Long id) {
         Map<String, Object> goods = jdbcTemplate.queryForMap("""
-                select g.id, g.name, g.description `desc`, g.price, g.old_price oldPrice, g.main_picture picture,
-                       g.inventory, g.sales_count salesCount, g.status, g.category_id categoryId, g.brand_id brandId,
-                       g.is_new isNew, g.is_hot isHot, c.name categoryName, b.name brandName
+                select g.id, g.name, g.description as "desc", g.price, g.old_price as "oldPrice", g.main_picture picture,
+                       g.inventory, g.sales_count as "salesCount", g.status, g.category_id as "categoryId", g.brand_id as "brandId",
+                       g.is_new as "isNew", g.is_hot as "isHot", c.name as "categoryName", b.name as "brandName"
                 from goods g
                 left join category c on c.id = g.category_id
                 left join brand b on b.id = g.brand_id
@@ -80,7 +79,7 @@ public class AdminService {
         List<Map<String, Object>> mainPictures = goodsPictures(id, 1);
         List<Map<String, Object>> detailPictures = goodsPictures(id, 2);
         List<Map<String, Object>> properties = jdbcTemplate.queryForList("""
-                select id, name, value, sort_order sortOrder
+                select id, name, value, sort_order as "sortOrder"
                 from goods_property
                 where goods_id = ?
                 order by sort_order
@@ -128,7 +127,7 @@ public class AdminService {
                     insert into goods(category_id, brand_id, name, description, price, old_price, main_picture,
                                       inventory, is_new, is_hot, status)
                     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, Statement.RETURN_GENERATED_KEYS);
+                    """, new String[]{"id"});
             fillGoodsStatement(statement, body);
             return statement;
         }, keyHolder);
@@ -168,8 +167,8 @@ public class AdminService {
 
     public List<Map<String, Object>> categories() {
         List<Map<String, Object>> categories = jdbcTemplate.queryForList("""
-                select c.id, c.parent_id parentId, c.name, c.picture, c.level, c.sort_order sortOrder, c.status,
-                       p.name parentName
+                select c.id, c.parent_id as "parentId", c.name, c.picture, c.level, c.sort_order as "sortOrder", c.status,
+                       p.name as "parentName"
                 from category c
                 left join category p on p.id = c.parent_id
                 order by c.level, coalesce(c.parent_id, c.id), c.sort_order
@@ -186,7 +185,7 @@ public class AdminService {
             PreparedStatement statement = connection.prepareStatement("""
                     insert into category(parent_id, name, picture, sale_info, level, sort_order, status)
                     values (?, ?, ?, ?, ?, ?, ?)
-                    """, Statement.RETURN_GENERATED_KEYS);
+                    """, new String[]{"id"});
             if (parentId == null) {
                 statement.setObject(1, null);
                 statement.setInt(5, 1);
@@ -231,8 +230,8 @@ public class AdminService {
                 where (? = true or order_state = ?)
                 """, Long.class, all, orderState);
         List<Map<String, Object>> items = jdbcTemplate.queryForList("""
-                select id, order_no orderNo, receiver, contact, goods_count goodsCount, pay_money payMoney,
-                       order_state orderState, date_format(created_at, '%Y-%m-%d %H:%i:%s') createTime
+                select id, order_no as "orderNo", receiver, contact, goods_count as "goodsCount", pay_money as "payMoney",
+                       order_state as "orderState", to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as "createTime"
                 from orders
                 where (? = true or order_state = ?)
                 order by created_at desc
@@ -255,8 +254,8 @@ public class AdminService {
 
     public List<Map<String, Object>> banners() {
         List<Map<String, Object>> banners = jdbcTemplate.queryForList("""
-                select id, img_url imgUrl, href_url hrefUrl, distribution_site distributionSite,
-                       title, sort_order sortOrder, status
+                select id, img_url as "imgUrl", href_url as "hrefUrl", distribution_site as "distributionSite",
+                       title, sort_order as "sortOrder", status
                 from banner
                 order by distribution_site, sort_order
                 """);
@@ -271,7 +270,7 @@ public class AdminService {
             PreparedStatement statement = connection.prepareStatement("""
                     insert into banner(img_url, href_url, distribution_site, title, sort_order, status)
                     values (?, ?, ?, ?, ?, ?)
-                    """, Statement.RETURN_GENERATED_KEYS);
+                    """, new String[]{"id"});
             statement.setString(1, stringValue(body.get("imgUrl")));
             statement.setString(2, stringValue(body.get("hrefUrl")));
             statement.setInt(3, intValue(body.get("distributionSite"), 1));
@@ -305,12 +304,12 @@ public class AdminService {
         long offset = Math.max(page - 1, 0) * pageSize;
         Long counts = jdbcTemplate.queryForObject("""
                 select count(*)
-                from user
+                from "user"
                 where (? = '%%' or account like ? or nickname like ? or mobile like ?)
                 """, Long.class, likeKeyword, likeKeyword, likeKeyword, likeKeyword);
         List<Map<String, Object>> items = jdbcTemplate.queryForList("""
-                select id, account, nickname, mobile, email, gender, status, date_format(created_at, '%Y-%m-%d %H:%i:%s') createTime
-                from user
+                select id, account, nickname, mobile, email, gender, status, to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as "createTime"
+                from "user"
                 where (? = '%%' or account like ? or nickname like ? or mobile like ?)
                 order by created_at desc
                 limit ? offset ?
@@ -320,7 +319,7 @@ public class AdminService {
 
     @Transactional
     public void updateUserStatus(Long id, Integer status) {
-        jdbcTemplate.update("update user set status = ?, updated_at = current_timestamp where id = ?", status, id);
+        jdbcTemplate.update("update \"user\" set status = ?, updated_at = current_timestamp where id = ?", status, id);
     }
 
     @Transactional
@@ -329,7 +328,7 @@ public class AdminService {
             throw new BizException("USER_001", "密码长度需为 6 到 32 位");
         }
         jdbcTemplate.update("""
-                update user
+                update "user"
                 set password_hash = ?, updated_at = current_timestamp
                 where id = ?
                 """, hashPassword(password), id);
@@ -365,7 +364,7 @@ public class AdminService {
 
     private List<Map<String, Object>> goodsPictures(Long goodsId, int type) {
         List<Map<String, Object>> pictures = jdbcTemplate.queryForList("""
-                select id, picture_url url, sort_order sortOrder
+                select id, picture_url url, sort_order as "sortOrder"
                 from goods_picture
                 where goods_id = ? and picture_type = ?
                 order by sort_order
@@ -376,14 +375,14 @@ public class AdminService {
 
     private List<Map<String, Object>> specs(Long goodsId) {
         List<Map<String, Object>> specs = jdbcTemplate.queryForList("""
-                select id, name, sort_order sortOrder
+                select id, name, sort_order as "sortOrder"
                 from spec
                 where goods_id = ?
                 order by sort_order
                 """, goodsId);
         specs.forEach(spec -> {
             List<Map<String, Object>> values = jdbcTemplate.queryForList("""
-                    select id, name, picture, sort_order sortOrder
+                    select id, name, picture, sort_order as "sortOrder"
                     from spec_value
                     where spec_id = ?
                     order by sort_order
@@ -396,13 +395,13 @@ public class AdminService {
 
     private List<Map<String, Object>> adminSkus(Long goodsId) {
         List<Map<String, Object>> skus = jdbcTemplate.queryForList("""
-                select id, sku_code skuCode, price, old_price oldPrice, inventory, picture, status
+                select id, sku_code as "skuCode", price, old_price as "oldPrice", inventory, picture, status
                 from sku
                 where goods_id = ? and (sku_code is null or sku_code not like 'ARCHIVED-%')
                 order by id
                 """, goodsId);
         skus.forEach(sku -> sku.put("specs", jdbcTemplate.queryForList("""
-                select spec_name name, value_name valueName
+                select spec_name name, value_name as "valueName"
                 from sku_spec_value
                 where sku_id = ?
                 order by spec_id
@@ -499,7 +498,7 @@ public class AdminService {
                 PreparedStatement statement = connection.prepareStatement("""
                         insert into spec(goods_id, name, sort_order)
                         values (?, ?, ?)
-                        """, Statement.RETURN_GENERATED_KEYS);
+                        """, new String[]{"id"});
                 statement.setLong(1, goodsId);
                 statement.setString(2, specName);
                 statement.setInt(3, sortOrder(spec, currentSpecIndex));
@@ -520,7 +519,7 @@ public class AdminService {
                     PreparedStatement statement = connection.prepareStatement("""
                             insert into spec_value(spec_id, name, picture, sort_order)
                             values (?, ?, ?, ?)
-                            """, Statement.RETURN_GENERATED_KEYS);
+                            """, new String[]{"id"});
                     statement.setLong(1, specId);
                     statement.setString(2, valueName);
                     statement.setString(3, stringValue(value.get("picture")));
@@ -543,7 +542,7 @@ public class AdminService {
                 PreparedStatement statement = connection.prepareStatement("""
                         insert into sku(goods_id, sku_code, price, old_price, inventory, picture, status)
                         values (?, ?, ?, ?, ?, ?, ?)
-                        """, Statement.RETURN_GENERATED_KEYS);
+                        """, new String[]{"id"});
                 statement.setLong(1, goodsId);
                 statement.setString(2, skuCode(goodsId, sku, currentIndex));
                 statement.setBigDecimal(3, decimalValueOrDefault(sku.get("price"), decimalValue(body.get("price"))));

@@ -22,9 +22,9 @@ public class CartService {
 
     public List<Map<String, Object>> list() {
         List<Map<String, Object>> items = jdbcTemplate.queryForList("""
-                select c.id, c.goods_id goodsId, c.sku_id skuId, g.name, coalesce(s.picture, g.main_picture) picture,
+                select c.id, c.goods_id as "goodsId", c.sku_id as "skuId", g.name, coalesce(s.picture, g.main_picture) picture,
                        s.price, c.count, c.selected,
-                       coalesce(group_concat(concat(ssv.spec_name, ': ', ssv.value_name) order by ssv.spec_id separator ' '), '') attrsText
+                       coalesce(string_agg(ssv.spec_name || ': ' || ssv.value_name, ' ' order by ssv.spec_id), '') as "attrsText"
                 from cart_item c
                 join goods g on g.id = c.goods_id
                 join sku s on s.id = c.sku_id
@@ -40,14 +40,17 @@ public class CartService {
     @Transactional
     public void add(AddCartRequest request) {
         Map<String, Object> sku = jdbcTemplate.queryForMap("""
-                select id, goods_id goodsId
+                select id, goods_id as "goodsId"
                 from sku
                 where id = ?
                 """, request.skuId());
         jdbcTemplate.update("""
                 insert into cart_item(user_id, goods_id, sku_id, count, selected)
                 values (?, ?, ?, ?, 1)
-                on duplicate key update count = count + values(count), selected = 1, updated_at = current_timestamp
+                on conflict (user_id, sku_id)
+                do update set count = cart_item.count + excluded.count,
+                              selected = 1,
+                              updated_at = current_timestamp
                 """, DEMO_USER_ID, sku.get("goodsId"), request.skuId(), request.count());
     }
 

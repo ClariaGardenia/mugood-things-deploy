@@ -39,12 +39,12 @@ public class CustomerOrderTool {
 
         Long numericId = parseNumericId(normalizedKeyword);
         List<Map<String, Object>> orders = jdbcTemplate.queryForList("""
-                select id, order_no orderNo, receiver, contact, full_location fullLocation, address,
-                       goods_count goodsCount, total_price totalPrice, post_fee postFee,
-                       total_pay_price totalPayPrice, pay_money payMoney, order_state orderState,
-                       date_format(created_at, '%Y-%m-%d %H:%i:%s') createTime,
-                       date_format(pay_deadline, '%Y-%m-%d %H:%i:%s') payDeadline,
-                       greatest(0, timestampdiff(second, now(), coalesce(pay_deadline, date_add(now(), interval countdown second)))) countdown
+                select id, order_no as "orderNo", receiver, contact, full_location as "fullLocation", address,
+                       goods_count as "goodsCount", total_price as "totalPrice", post_fee as "postFee",
+                       total_pay_price as "totalPayPrice", pay_money as "payMoney", order_state as "orderState",
+                       to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as "createTime",
+                       to_char(pay_deadline, 'YYYY-MM-DD HH24:MI:SS') as "payDeadline",
+                       greatest(0, floor(extract(epoch from (coalesce(pay_deadline, current_timestamp + countdown * interval '1 second') - current_timestamp)))::int) countdown
                 from orders
                 where user_id = ? and (order_no = ? or (? is not null and id = ?))
                 limit 1
@@ -68,8 +68,8 @@ public class CustomerOrderTool {
 
     private List<Map<String, Object>> orderSkus(Long orderId) {
         List<Map<String, Object>> skus = jdbcTemplate.queryForList("""
-                select id, goods_id goodsId, sku_id skuId, name, image, attrs_text attrsText,
-                       real_pay realPay, quantity, total_pay_price totalPayPrice
+                select id, goods_id as "goodsId", sku_id as "skuId", name, image, attrs_text as "attrsText",
+                       real_pay as "realPay", quantity, total_pay_price as "totalPayPrice"
                 from order_sku
                 where order_id = ?
                 order by id

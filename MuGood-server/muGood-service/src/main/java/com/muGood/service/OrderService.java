@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +28,7 @@ public class OrderService {
 
     public Map<String, Object> preOrder() {
         List<Map<String, Object>> addresses = jdbcTemplate.queryForList("""
-                select id, receiver, contact, full_location fullLocation, address, is_default isDefault
+                select id, receiver, contact, full_location as "fullLocation", address, is_default as "isDefault"
                 from user_address
                 where user_id = ?
                 order by is_default, id
@@ -42,7 +41,7 @@ public class OrderService {
     @Transactional
     public Map<String, Object> create(CreateOrderRequest request) {
         Map<String, Object> address = jdbcTemplate.queryForMap("""
-                select id, receiver, contact, full_location fullLocation, address
+                select id, receiver, contact, full_location as "fullLocation", address
                 from user_address
                 where id = ? and user_id = ?
                 """, request.addressId(), DEMO_USER_ID);
@@ -59,8 +58,8 @@ public class OrderService {
                     insert into orders(order_no, user_id, address_id, receiver, contact, full_location, address,
                                        goods_count, total_price, post_fee, total_pay_price, pay_money,
                                        delivery_time_type, pay_type, pay_channel, buyer_message, order_state, countdown, pay_deadline)
-                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1800, date_add(now(), interval 30 minute))
-                    """, Statement.RETURN_GENERATED_KEYS);
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1800, current_timestamp + interval '30 minutes')
+                    """, new String[]{"id"});
             statement.setString(1, orderNo);
             statement.setLong(2, DEMO_USER_ID);
             statement.setLong(3, request.addressId());
@@ -103,8 +102,8 @@ public class OrderService {
                 where user_id = ? and (? = true or order_state = ?)
                 """, Long.class, DEMO_USER_ID, all, orderState);
         List<Map<String, Object>> orders = jdbcTemplate.queryForList("""
-                select id, order_no orderNo, date_format(created_at, '%Y-%m-%d %H:%i:%s') createTime,
-                       order_state orderState, countdown, pay_money payMoney, post_fee postFee
+                select id, order_no as "orderNo", to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') as "createTime",
+                       order_state as "orderState", countdown, pay_money as "payMoney", post_fee as "postFee"
                 from orders
                 where user_id = ? and (? = true or order_state = ?)
                 order by created_at desc
@@ -116,8 +115,8 @@ public class OrderService {
 
     public Map<String, Object> detail(Long id) {
         return jdbcTemplate.queryForMap("""
-                select id, pay_money payMoney,
-                       greatest(0, timestampdiff(second, now(), coalesce(pay_deadline, date_add(now(), interval countdown second)))) countdown
+                select id, pay_money as "payMoney",
+                       greatest(0, floor(extract(epoch from (coalesce(pay_deadline, current_timestamp + countdown * interval '1 second') - current_timestamp)))::int) countdown
                 from orders
                 where id = ? and user_id = ?
                 """, id, DEMO_USER_ID);
@@ -125,9 +124,9 @@ public class OrderService {
 
     private List<Map<String, Object>> selectedCartGoods() {
         List<Map<String, Object>> items = jdbcTemplate.queryForList("""
-                select c.id, c.goods_id goodsId, c.sku_id skuId, g.name, coalesce(s.picture, g.main_picture) picture,
-                       s.price, c.count, s.price * c.count totalPrice, s.price * c.count totalPayPrice,
-                       coalesce(group_concat(concat(ssv.spec_name, ': ', ssv.value_name) order by ssv.spec_id separator ' '), '') attrsText
+                select c.id, c.goods_id as "goodsId", c.sku_id as "skuId", g.name, coalesce(s.picture, g.main_picture) picture,
+                       s.price, c.count, s.price * c.count as "totalPrice", s.price * c.count as "totalPayPrice",
+                       coalesce(string_agg(ssv.spec_name || ': ' || ssv.value_name, ' ' order by ssv.spec_id), '') as "attrsText"
                 from cart_item c
                 join goods g on g.id = c.goods_id
                 join sku s on s.id = c.sku_id
@@ -141,7 +140,7 @@ public class OrderService {
 
     private List<Map<String, Object>> orderSkus(Long orderId) {
         List<Map<String, Object>> skus = jdbcTemplate.queryForList("""
-                select id, goods_id goodsId, sku_id skuId, name, image, attrs_text attrsText, real_pay realPay, quantity
+                select id, goods_id as "goodsId", sku_id as "skuId", name, image, attrs_text as "attrsText", real_pay as "realPay", quantity
                 from order_sku
                 where order_id = ?
                 order by id

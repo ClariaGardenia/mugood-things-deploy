@@ -2,7 +2,7 @@ package com.muGood.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 
-@TableName("user")
+@TableName("\"user\"")
 public class User {
     private Long id;
     private String account;

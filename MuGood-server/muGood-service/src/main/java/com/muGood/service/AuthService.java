@@ -53,7 +53,7 @@ public class AuthService {
 
     public Map<String, Object> adminLogin(LoginRequest request) {
         List<Map<String, Object>> admins = jdbcTemplate.queryForList("""
-                select id, account, password_hash passwordHash, nickname, avatar, mobile, email, role
+                select id, account, password_hash as "passwordHash", nickname, avatar, mobile, email, role
                 from admin
                 where account = ? and status = 1
                 limit 1

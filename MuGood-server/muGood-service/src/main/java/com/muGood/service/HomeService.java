@@ -18,7 +18,7 @@ public class HomeService {
 
     public List<Map<String, Object>> banners(Integer distributionSite) {
         List<Map<String, Object>> banners = jdbcTemplate.queryForList("""
-                select id, img_url imgUrl, href_url hrefUrl, title
+                select id, img_url as "imgUrl", href_url as "hrefUrl", title
                 from banner
                 where distribution_site = ? and status = 1
                 order by sort_order
@@ -39,7 +39,7 @@ public class HomeService {
 
     public List<Map<String, Object>> newGoods() {
         List<Map<String, Object>> goods = jdbcTemplate.queryForList("""
-                select id, name, description `desc`, price, main_picture picture
+                select id, name, description as "desc", price, main_picture picture
                 from goods
                 where is_new = 1 and status = 1
                 order by publish_time desc
@@ -69,7 +69,7 @@ public class HomeService {
 
     private List<Map<String, Object>> topCategories() {
         List<Map<String, Object>> categories = jdbcTemplate.queryForList("""
-                select id, name, picture, sale_info saleInfo
+                select id, name, picture, sale_info as "saleInfo"
                 from category
                 where parent_id is null and status = 1
                 order by sort_order
@@ -91,7 +91,7 @@ public class HomeService {
 
     private List<Map<String, Object>> recommendGoods(Long categoryId, int limit) {
         List<Map<String, Object>> goods = jdbcTemplate.queryForList("""
-                select g.id, g.name, g.description `desc`, g.price, g.main_picture picture
+                select g.id, g.name, g.description as "desc", g.price, g.main_picture picture
                 from goods g
                 left join category_goods_recommend r on r.goods_id = g.id and r.category_id = ?
                 where g.status = 1

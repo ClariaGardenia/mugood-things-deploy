@@ -21,10 +21,10 @@ public class GoodsService {
 
     public Map<String, Object> detail(Long id) {
         Map<String, Object> goods = jdbcTemplate.queryForMap("""
-                select g.id, g.name, g.description `desc`, g.price, g.old_price oldPrice,
-                       g.sales_count salesCount, g.comment_count commentCount, g.collect_count collectCount,
-                       g.main_picture mainPicture, g.category_id categoryId,
-                       b.id brandId, b.name brandName
+                select g.id, g.name, g.description as "desc", g.price, g.old_price as "oldPrice",
+                       g.sales_count as "salesCount", g.comment_count as "commentCount", g.collect_count as "collectCount",
+                       g.main_picture as "mainPicture", g.category_id as "categoryId",
+                       b.id as "brandId", b.name as "brandName"
                 from goods g
                 left join brand b on b.id = g.brand_id
                 where g.id = ?
@@ -70,7 +70,7 @@ public class GoodsService {
         int size = limit == null ? 3 : limit;
         String orderBy = type != null && type == 2 ? "evaluate_num desc" : "order_num desc";
         List<Map<String, Object>> goods = jdbcTemplate.queryForList("""
-                select id, name, description `desc`, price, main_picture picture
+                select id, name, description as "desc", price, main_picture picture
                 from goods
                 where id <> ? and status = 1
                 order by %s
@@ -82,7 +82,7 @@ public class GoodsService {
 
     public List<Map<String, Object>> relevant(Integer limit) {
         List<Map<String, Object>> goods = jdbcTemplate.queryForList("""
-                select id, name, description `desc`, price, main_picture picture
+                select id, name, description as "desc", price, main_picture picture
                 from goods
                 where status = 1
                 order by order_num desc
@@ -133,12 +133,12 @@ public class GoodsService {
 
     private List<Map<String, Object>> skus(Long goodsId) {
         List<Map<String, Object>> skus = jdbcTemplate.queryForList("""
-                select id, price, old_price oldPrice, inventory, picture
+                select id, price, old_price as "oldPrice", inventory, picture
                 from sku
                 where goods_id = ? and status = 1
                 """, goodsId);
         skus.forEach(sku -> sku.put("specs", jdbcTemplate.queryForList("""
-                select spec_name name, value_name valueName
+                select spec_name name, value_name as "valueName"
                 from sku_spec_value
                 where sku_id = ?
                 order by spec_id
