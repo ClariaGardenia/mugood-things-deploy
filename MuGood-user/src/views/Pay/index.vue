@@ -21,7 +21,7 @@
   const baseURL = import.meta.env.VITE_API_BASE_URL
   const backURL = import.meta.env.VITE_PAY_BASE_URL
   const redirectUrl = encodeURIComponent(backURL)
-  const payUrl = `${baseURL}/aliPay?orderId=${route.query.id}&redirect=${redirectUrl}`
+  const payUrl = `${baseURL}/pay/aliPay?orderId=${route.query.id}&redirect=${redirectUrl}`
 </script>
 
 
