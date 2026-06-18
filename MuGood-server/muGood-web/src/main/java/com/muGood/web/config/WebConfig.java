@@ -10,16 +10,15 @@ import java.nio.file.Path;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    @Value("${fresh-rabbit.upload.dir:uploads}")
-    private String uploadDir;
-
-    @Value("${fresh-rabbit.upload.url-prefix:/uploads}")
-    private String uploadUrlPrefix;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+                .allowedOriginPatterns(
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
+                        "https://*.onrender.com"
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
@@ -27,12 +26,14 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path uploadPath = Path.of(uploadDir).toAbsolutePath().normalize();
+        Path uploadPath = Path.of("uploads").toAbsolutePath().normalize();
         String uploadLocation = uploadPath.toUri().toString();
+
         if (!uploadLocation.endsWith("/")) {
-            uploadLocation = uploadLocation + "/";
+            uploadLocation += "/";
         }
-        registry.addResourceHandler(uploadUrlPrefix + "/**")
+
+        registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(uploadLocation);
     }
 }

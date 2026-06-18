@@ -1,9 +1,10 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
     name: muGood-server
+
   autoconfigure:
     exclude:
       - com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeAgentAutoConfiguration
@@ -13,6 +14,7 @@ spring:
       - com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeEmbeddingAutoConfiguration
       - com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeImageAutoConfiguration
       - com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeRerankAutoConfiguration
+
   ai:
     dashscope:
       api-key: ${DASHSCOPE_API_KEY}
@@ -20,11 +22,13 @@ spring:
         options:
           model: qwen3.5-omni-flash
           temperature: 0.4
+
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/mugood_things?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false}
-    username: ${SPRING_DATASOURCE_USERNAME:backend_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
   servlet:
     multipart:
       max-file-size: 10MB
