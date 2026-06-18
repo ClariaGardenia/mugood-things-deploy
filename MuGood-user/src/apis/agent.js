@@ -1,6 +1,6 @@
 import httpInstance from '@/utils/http'
 
-const baseURL = 'http://localhost:8080'
+const baseURL = import.meta.env.VITE_API_BASE_URL
 
 export const chatWithCustomerAgentAPI = (message, sessionId) => {
   return httpInstance({
