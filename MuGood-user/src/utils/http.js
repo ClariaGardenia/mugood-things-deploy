@@ -5,7 +5,7 @@ import router from '@/router'
 // 创建axios实例
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 8000
+  timeout: 24000
 })
 
 // axios请求拦截器
